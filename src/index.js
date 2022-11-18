@@ -1,6 +1,6 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { addTileLayer, validateIP } from "./helpers";
+import { getOffset, addTileLayer, getAddress, validateIP } from "./helpers";
 import icon from "../images/icon-location.svg";
 
 const ipInput = document.querySelector(".search-bar__input");
@@ -30,14 +30,10 @@ ipInput.addEventListener("keydown", handleKey);
 function getData() {
   // Сделать валидацию значения из поля ввода
   if (validateIP(ipInput.value)) {
-    fetch(
-      `https://geo.ipify.org/api/v2/country?apiKey=at_OdAYDZ56SgEg5W0cdxlr7ooOysJYH&ipAddress=${ipInput.value}`
-    )
-      .then((response) => response.json())
+    getAddress(ipInput.value)
       .then(setMapData)
       .catch((error) => console.log(error));
   }
-  //   console.log(ipInput.value);
 }
 
 function handleKey(e) {
@@ -47,9 +43,21 @@ function handleKey(e) {
 }
 
 function setMapData(mapData) {
-  console.log(mapData);
+  // console.log(mapData);
+  const { lat, lng, country, region, timezone } = mapData.location;
   ipInfo.innerText = mapData.ip;
-  locationInfo.innerText = `${mapData.location.country}, ${mapData.location.region}`;
-  timezoneInfo.innerText = mapData.location.timezone;
+  locationInfo.innerText = `${country}, ${region}`;
+  timezoneInfo.innerText = timezone;
   ispInfo.innerText = mapData.isp;
+
+  map.setView([lat, lng]);
+  L.marker([lat, lng], { icon: locationIcon }).addTo(map);
+
+  if (matchMedia("(max-width: 1023px)").matches) {
+    getOffset(map);
+  }
 }
+
+document.addEventListener("DOMContentLoaded", () =>
+  getAddress("84.10.20.10").then(setMapData)
+);
